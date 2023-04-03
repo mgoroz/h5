@@ -7,13 +7,22 @@ public class Node {
    private Node nextSibling;
 
    Node(String n, Node d, Node r) {
-      if (n == null || n.isEmpty() || n.contains("(") || n.contains(")") || n.contains(",") || n.matches(".*\\s.*")) {
+      if (n == null) { // bypass validation for sentinel nodes
+         this.name = n;
+         this.firstChild = d;
+         this.nextSibling = r;
+         return;
+      }
+
+      if (n.isEmpty() || n.contains("(") || n.contains(")") || n.contains(",") || n.contains(" ")) {
          throw new RuntimeException("Invalid node name: " + n);
       }
+
       this.name = n;
       this.firstChild = d;
       this.nextSibling = r;
    }
+
 
    public static Node parsePostfix(String s) {
       if (s == null || s.isEmpty()) {
@@ -39,7 +48,7 @@ public class Node {
             i++;
          } else if (c == ')') {
             List<Node> children = new ArrayList<>();
-            while (!stack.isEmpty() && stack.peek().nextSibling == null) {
+            while (!stack.isEmpty() && stack.peek().nextSibling == null && stack.peek().firstChild == null) {
                Node child = stack.pop();
                children.add(0, child);
             }
@@ -62,13 +71,11 @@ public class Node {
       }
 
       if (stack.size() != 1) {
-         throw new RuntimeException("Invalid input string2: " + s);
+         throw new RuntimeException("Invalid input string: " + s);
       }
 
       return stack.pop();
    }
-
-
 
 
 
