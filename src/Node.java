@@ -7,17 +7,9 @@ public class Node {
    private Node nextSibling;
 
    Node(String n, Node d, Node r) {
-      if (n == null) { // bypass validation for sentinel nodes
-         this.name = n;
-         this.firstChild = d;
-         this.nextSibling = r;
-         return;
-      }
-
-      if (n.isEmpty() || n.contains("(") || n.contains(")") || n.contains(",") || n.contains(" ")) {
+      if (n == null || n.isEmpty() || n.matches(".*\\s.*")) {
          throw new RuntimeException("Invalid node name: " + n);
       }
-
       this.name = n;
       this.firstChild = d;
       this.nextSibling = r;
@@ -35,47 +27,72 @@ public class Node {
       while (i < s.length()) {
          char c = s.charAt(i);
 
-         if (Character.isLetterOrDigit(c)) {
+         if (c != '(' && c != ')' && c != ',' && !Character.isWhitespace(c)) {
             StringBuilder nodeName = new StringBuilder();
-            while (i < s.length() && Character.isLetterOrDigit(s.charAt(i))) {
+            while (i < s.length() && s.charAt(i) != '(' && s.charAt(i) != ')' && s.charAt(i) != ',' && !Character.isWhitespace(s.charAt(i))) {
                nodeName.append(s.charAt(i));
                i++;
             }
-            stack.push(new Node(nodeName.toString(), null, null));
-         } else if (c == '(') {
-            i++;
-         } else if (c == ',') {
-            i++;
-         } else if (c == ')') {
-            List<Node> children = new ArrayList<>();
-            while (!stack.isEmpty() && stack.peek().nextSibling == null && stack.peek().firstChild == null) {
-               Node child = stack.pop();
-               children.add(0, child);
-            }
 
-            if (!stack.isEmpty()) {
-               Node parent = stack.pop();
+            Node parent = new Node(nodeName.toString(), null, null);
+
+            if (!stack.isEmpty() && stack.peek().name.equals(")")) {
+               // there are children in stack
+
+               stack.pop(); // pop ")"
+
+               List<Node> children = new ArrayList<>();
+               while (!stack.isEmpty() && !stack.peek().name.equals("(")) {
+                  Node child = stack.pop();
+                  children.add(0, child);
+
+                  if (!stack.isEmpty() && !stack.peek().name.equals("(")){
+                     if (!stack.peek().name.equals(",")) {
+                        // there was no "," between children
+                        throw new RuntimeException("Invalid input string: " + s);
+                     }
+                     stack.pop(); // pop ","
+                     if (!stack.isEmpty() && stack.peek().name.equals("(")){
+                        // expecting a sibling before ","
+                        throw new RuntimeException("Invalid input string: " + s);
+                     }
+                  }
+               }
+
+               if (stack.isEmpty()) {
+                  // there was no "("
+                  throw new RuntimeException("Invalid input string: " + s);
+               }
+               stack.pop(); // pop "("
+
                parent.firstChild = children.get(0);
                for (int j = 0; j < children.size() - 1; j++) {
                   children.get(j).nextSibling = children.get(j + 1);
                }
-               stack.push(parent);
-            } else {
-               throw new RuntimeException("Invalid input string: " + s);
             }
 
+            stack.push(parent);
+         } else if (c == '(') {
+            stack.push(new Node("(", null, null));
+            i++;
+         } else if (c == ',') {
+            stack.push(new Node(",", null, null));
+            i++;
+         } else if (c == ')') {
+            stack.push(new Node(")", null, null));
             i++;
          } else {
-            throw new RuntimeException("Invalid character in input string: " + c);
+            throw new RuntimeException("Invalid character " + c + " in input string: " + s);
          }
       }
 
       if (stack.size() != 1) {
-         throw new RuntimeException("Invalid input string: " + s);
+         throw new RuntimeException("Invalid input string2: " + s);
       }
 
       return stack.pop();
    }
+
 
 
 
